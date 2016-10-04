@@ -86,13 +86,16 @@ $(function () {
     // and inserts it into the chart data structure
     var timer = 0;
     var submit_form = function() {
+      // If called directly from UI, clear existing timer.
       if(timer) {
         clearTimeout(timer);
         timer = 0;
       }
+      // Get data from views.py
       $.getJSON($SCRIPT_ROOT + '/_timeseries', {
-        url: $('select[id="url"]').val()
+        currKey: $('select[id="currKey"]').val()
       }, function(data) {
+        // Update chart
         var chart = $("#container").highcharts();
         var cumulative = [];
         var stable = [];
@@ -114,7 +117,8 @@ $(function () {
         chart.series[2].setData(stable, false, true, true);
         chart.redraw();
       });
-      timer = setTimeout(submit_form, 1000);
+      // Restart timer to keep updating periodically.
+      timer = setTimeout(submit_form, 5000);
     };
     $('a#calculate').bind('click', submit_form);
     $('input[type=text]').bind('keydown', function(e) {
@@ -122,7 +126,7 @@ $(function () {
         submit_form();
       }
     });
-    $('input[name=url]').focus().select();
+    // Initial start of timer, make it wait for 1 sec to allow highcharts to load.
     setTimeout(submit_form, 1000);
   });
 
@@ -140,8 +144,8 @@ $(function () {
 	<script src="http://www.highcharts.com/joomla/js/covervid/fullscreen.js" type="text/javascript"></script>
 </head>
 <body >
-        <!-- Selection box that allows to switch sensors //-->
-        <div style="margin: 15px"><select id="url" onchange="submut_form()">
+        <!-- Selection box that allows to switch among a sample of sensors //-->
+        <div style="margin: 15px"><select id="currKey" onchange="submut_form()">
 		<option value="0">Sensor 1</option>
 		<option value="1">Sensor 2</option>
 		<option value="2">Sensor 3</option>
@@ -166,4 +170,3 @@ $(function () {
 </body>
 </html>
 {% endblock %}
-

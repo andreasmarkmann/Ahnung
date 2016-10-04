@@ -49,47 +49,54 @@ class Producer(threading.Thread):
     uid = list(np.arange(uidnum))
 
     ratepersecond = 5000
-    burstfraction=0.1
-    burstnum = ratepersecond*burstfraction
+    burstFraction=0.1
+    burstnum = ratepersecond*burstFraction
 
+    ## Gaussian parameters for variation of message rate
     gmu = 0.0
     gsig = 0.1
 
+    ## Lognormal parameters for delay of message delivery
     lmu = 2.5
     lsig = 1.0
 
-    global totalsamples
+    global totalSamples
 
     while True:
-      mynum = int(round( burstnum*(1 + np.random.normal(gmu, gsig)) ))
+      ## emit data in bursts, compute number of messages in this burst
+      ## from target rate
+      currNum = int(round( burstnum*(1 + np.random.normal(gmu, gsig)) ))
       tt = time.time()
-      totalsamples += mynum
-      #print("=== CURRENT TIME === ", tt)
-      for sample in xrange(mynum):
+      totalSamples += currNum
+      for sample in xrange(currNum):
         delay = np.random.lognormal(lmu, lsig)
-        myurl = url[np.random.randint(urlnum)]
-        myuid = uid[np.random.randint(uidnum)]
-        mytime = tt - delay
-	outputstr = "%s;%s;%s" % (myurl, myuid, mytime)
-        #print(outputstr)
-        producer.produce(outputstr, partition_key=str(myurl))
-        ## every ten minutes, bump rate for two minutes to show alert
-        if ( not np.random.randint(3) and 120*(myurl%5) <= (mytime % 600) < 120*(myurl%5 + 1) ):
-          outputstr = "%s;%s;%s" % (myurl, myuid, mytime + np.random.normal(0.0, 5.0))
-          producer.produce(outputstr, partition_key=str(myurl))
+        currKey = url[np.random.randint(urlnum)]
+        currID = uid[np.random.randint(uidnum)]
+	## Emulate delayed message delivery by back dating event time
+        eventTime = tt - delay
+	outputStr = "%s;%s;%s" % (currKey, currID, eventTime)
+        #print(outputStr)
+        producer.produce(outputStr, partition_key=str(currKey))
+        ## Every ten minutes, bump rate for two minutes to trigger alert.
+	## Trigger if event time falls into the (key%5)-th 2 min interval of 10 min
+	## rolling cycle.
+	## To get rate increase by 1/n, trigger if `not np.random.randint(n)`.
+        if ( not np.random.randint(3) and 120*(currKey%5) <= (eventTime % 600) < 120*(currKey%5 + 1) ):
+          outputStr = "%s;%s;%s" % (currKey, currID, eventTime + np.random.normal(0.0, 5.0))
+          producer.produce(outputStr, partition_key=str(currKey))
 
-      timespent = time.time() - tt
-      sleeptime = burstfraction - timespent
-      if sleeptime < 0:
-        print("rate too high!")
+      timeSpent = time.time() - tt
+      sleepTime = burstFraction - timeSpent
+      if sleepTime < 0:
+        print("Rate too high! Launch more producers with smaller rate each.")
       else:
-        time.sleep(sleeptime)
+        time.sleep(sleepTime)
 
 
-starttime = time.time()
-totalsamples = 0
+startTime = time.time()
+totalSamples = 0
 Producer().start()
 while True:
   time.sleep(3)
-endtime = time.time()
-eprint(totalsamples, " samples produced in ", endtime - starttime, " seconds.")
+endTime = time.time()
+eprint(totalSamples, " samples produced in ", endTime - startTime, " seconds.")

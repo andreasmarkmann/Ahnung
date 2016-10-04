@@ -47,7 +47,7 @@ object AhnungStreaming extends Serializable {
     }
 
     // map each record into a tuple consisting of (key, ID, epochtime), total for each key+epochtime_to_30sec
-    val myDstream = messages
+    val sensorReadings = messages
       .mapPartitions( it =>
         it.map(tuple => {
           val record = tuple._2.split(";")
@@ -57,7 +57,7 @@ object AhnungStreaming extends Serializable {
         .foldLeft(new mutable.HashMap[String, Int])(
           (count, key) => count += (key -> (count.getOrElse(key, 0) + 1))
         ).toIterator
-      ).cache()
+      )
       // output to Redis: current time on worker node and running totals.
       // Use incrBy to accumulate atomically, creates key if it doesn't exist
       .foreachRDD( rdd => {
@@ -83,4 +83,3 @@ object AhnungStreaming extends Serializable {
     ssc.awaitTermination()
   }
 }
-

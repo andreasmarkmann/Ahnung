@@ -16,6 +16,7 @@ def weight(dt):
     ## scale time to account for latency if necessary
     scaledTime = dt - 10.0
     if(scaledTime < 0):
+        ## return small positive float, as math.erf fails at zero
         scaledTime = 0.01
     lmu = 2.5
     lsig = 1.0
@@ -24,39 +25,47 @@ def weight(dt):
 
 @app.route('/_timeseries')
 def timeseries():
-    """Retrieve time series for URL side"""
+    """Retrieve time series for currKey"""
 
-    ## time interval for measurement
+    ## Time interval for measurement
     interval = 30
-    ## expectation for total count
+    ## Expectation for total count
     expectation = 5000.0
 
-    url = request.args.get('url', 0, type=int)
+    ## Get parameter from javascript
+    currKey = request.args.get('currKey', 0, type=int)
+
+    ## Open Redis connection
     red = StrictRedis(host='ec2-xx-xx-xx-xx.compute-1.amazonaws.com', password='xxxxxxxxxxxxxx')
 
+    ## Compute average time at worker node when issuing messages from DB.
     dbTime = 0.0
     for ii in xrange(3):
       dbTime += float(red.get("currtime-" + str(ii)))
     dbTime /= 3.0
 
+    ## prospective value to get from DB
     nvalue = None
     shiftInterval = 0
+    ## round off to obtain interval
     nowinterval = int(dbTime)/interval*interval
 
+    ## We don't know if current time interval in already in DB,
+    ## so search for most recent interval.
     while (nvalue is None) and (shiftInterval < 100):
       currInterval = nowinterval - shiftInterval*interval
-      #print("trying interval at: ", currInterval)
-      key = "%s;%s" % (url, currInterval)
+      key = "%s;%s" % (currKey, currInterval)
       nvalue = red.get(key)
       shiftInterval += 1
-    #print("obtained (k, v): (", key, ", ", value, ")")
+
+    ## Get most recent points from DB and build result arrays.
     numPts = 20
     emergent = []
     cumulative = []
     stable = []
     for ii in xrange(1, numPts + 1):
       pastInterval = currInterval - (numPts - ii)*interval
-      key = "%s;%s" % (url, pastInterval)
+      key = "%s;%s" % (currKey, pastInterval)
       nvalue = red.get(key)
       value = int(nvalue) if (not nvalue is None) else 0
       cumulative.append([pastInterval, value])
@@ -67,8 +76,6 @@ def timeseries():
         pastInterval, value if (ii < numPts - 4) else
         value + (1.0 - weight(dt))*expectation
       ])
-      #weight(dt)*scaleUp(value, dt, interval) + (1.0 - weight(dt))*expectation
-    #print("dbt: ", dbTime, " w: ", weight(dt), " v: ", value, " dt: ", dt, " e: ", expectation)
     return jsonify(cumulative = cumulative, emergent = emergent, stable = stable)
 
 # returns slide deck as redirect for easy access
