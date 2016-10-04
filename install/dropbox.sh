@@ -1,6 +1,6 @@
 dirname=$(pwd)
 dirname=${dirname##*/}
-target="${HOME}/Dropbox/insight/project/"
+target="${HOME}/Dropbox/insight/"
 echo "backing up $dirname to $target/$dirname/"
 mkdir -p $target/$dirname
 /usr/bin/rsync -avz * $target/$dirname/ \
