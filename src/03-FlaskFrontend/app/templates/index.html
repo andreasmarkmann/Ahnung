@@ -1,18 +1,18 @@
 {% extends "layout.html" %}
 {% block body %}
+  <!--<script type="text/javascript" src="../static/js/jquery-3.1.1.min.js"></script>//-->
   <script type="text/javascript">
 
 var $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
 
 jQuery.noConflict();
 
-var example = 'dynamic-update',
+var example = 'dynamic-update', 
 theme = 'dark-unica';
 
 (function($){ // encapsulate jQuery
 $(function () {
     $(document).ready(function () {
-        // The highcharts object
         Highcharts.setOptions({
             global: {
                 useUTC: false
@@ -38,6 +38,7 @@ $(function () {
                 tickPixelInterval: 150
             },
             yAxis: {
+                min: 0,
                 title: {
                     text: 'Value'
                 },
@@ -60,42 +61,39 @@ $(function () {
             exporting: {
                 enabled: false
             },
-            series: [{
-                data: [],
-                name: 'Emergent Data',
-                color: '#64b5f6'
-            },
+            series: [
             {
                 data: [],
-                name: 'Cumulative Data',
-                color: '#64b5f6',
+                name: 'Raw Reports',
+                color: '#bdbdbd',
                 dashStyle: 'longdash'
             },
             {
                 data: [],
-                name: 'Stable Data',
+                name: 'Emergent Events',
+                color: '#64b5f6'
+            },
+            {
+                data: [],
+                name: 'Waiting for Data',
                 color: '#ffee58'
             }]
         });
     });
 });
 
-  // The function that queries flask and updates the highcharts object accordingly
   $(function() {
     // This function takes care of loading content from the backend
     // and inserts it into the chart data structure
     var timer = 0;
     var submit_form = function() {
-      // If called directly from UI, clear existing timer.
       if(timer) {
         clearTimeout(timer);
-        timer = 0;
+        timer = 0; 
       }
-      // Get data from views.py
       $.getJSON($SCRIPT_ROOT + '/_timeseries', {
-        currKey: $('select[id="currKey"]').val()
+        url: $('select[id="url"]').val()
       }, function(data) {
-        // Update chart
         var chart = $("#container").highcharts();
         var cumulative = [];
         var stable = [];
@@ -112,12 +110,11 @@ $(function () {
           var couplet = data.emergent[ii];
           emergent.push([couplet[0]*1000, couplet[1]]);
         }
-        chart.series[0].setData(emergent, false, true, true);
-        chart.series[1].setData(cumulative, false, true, true);
+        chart.series[0].setData(cumulative, false, true, true);
+        chart.series[1].setData(emergent, false, true, true);
         chart.series[2].setData(stable, false, true, true);
         chart.redraw();
       });
-      // Restart timer to keep updating periodically.
       timer = setTimeout(submit_form, 5000);
     };
     $('a#calculate').bind('click', submit_form);
@@ -126,7 +123,7 @@ $(function () {
         submit_form();
       }
     });
-    // Initial start of timer, make it wait for 1 sec to allow highcharts to load.
+    $('input[name=url]').focus().select();
     setTimeout(submit_form, 1000);
   });
 
@@ -135,6 +132,15 @@ $(function () {
 </script>
 
 	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="apple-touch-icon" sizes="57x57" href="http://www.highcharts.com/apple-touch-icon-57x57.png">
+	<link rel="apple-touch-icon" sizes="114x114" href="http://www.highcharts.com/apple-touch-icon-114x114.png">
+	<link rel="apple-touch-icon" sizes="72x72" href="http://www.highcharts.com/apple-touch-icon-72x72.png">
+	<link rel="apple-touch-icon" sizes="144x144" href="http://www.highcharts.com/apple-touch-icon-144x144.png">
+	<link rel="apple-touch-icon" sizes="60x60" href="http://www.highcharts.com/apple-touch-icon-60x60.png">
+	<link rel="apple-touch-icon" sizes="120x120" href="http://www.highcharts.com/apple-touch-icon-120x120.png">
+	<link rel="apple-touch-icon" sizes="76x76" href="http://www.highcharts.com/apple-touch-icon-76x76.png">
+	<link rel="apple-touch-icon" sizes="152x152" href="http://www.highcharts.com/apple-touch-icon-152x152.png">
+	<link rel="apple-touch-icon" sizes="180x180" href="http://www.highcharts.com/apple-touch-icon-180x180.png">
 	<link href="https://fonts.googleapis.com/css?family=Roboto+Condensed:400,300,700" rel="stylesheet" type="text/css">
 	<link href="https://fonts.googleapis.com/css?family=Roboto:400,100,300,500,700,900" rel="stylesheet" type="text/css">
 	<meta name="msapplication-TileColor" content="#2b5797">
@@ -144,25 +150,23 @@ $(function () {
 	<script src="http://www.highcharts.com/joomla/js/covervid/fullscreen.js" type="text/javascript"></script>
 </head>
 <body >
-        <!-- Selection box that allows to switch among a sample of sensors //-->
-        <div style="margin: 15px"><select id="currKey" onchange="submut_form()">
+	<div style="margin: 15px"><select id="url" onchange="submut_form()">
 		<option value="0">Sensor 1</option>
 		<option value="1">Sensor 2</option>
 		<option value="2">Sensor 3</option>
-                <option value="3">Sensor 4</option>
-                <option value="4">Sensor 5</option>
-                <option value="5">Sensor 6</option>
-                <option value="6">Sensor 7</option>
-                <option value="7">Sensor 8</option>
-                <option value="8">Sensor 9</option>
-                <option value="9">Sensor 10</option>
+		<option value="3">Sensor 4</option>
+		<option value="4">Sensor 5</option>
+		<option value="5">Sensor 6</option>
+		<option value="6">Sensor 7</option>
+		<option value="7">Sensor 8</option>
+		<option value="8">Sensor 9</option>
+		<option value="9">Sensor 10</option>
 	</select>
 	</div>
 	<br clear="all">
 	<div class="col-lg-9 col-md-9 col-sm-9 col-xs-12 sidebar-eq demo">
 		<script src="https://code.highcharts.com/highcharts.js"></script>
 		<script src="https://code.highcharts.com/modules/exporting.js"></script>
-                <!-- Container that holds the chart //-->
 		<div id="container" style="min-width: 310px; height: 400px; margin: 0 auto"></div>
 		<div class="clearfix"></div>
 		<script src="http://code.highcharts.com/themes/dark-unica.js"></script>
@@ -170,3 +174,4 @@ $(function () {
 </body>
 </html>
 {% endblock %}
+

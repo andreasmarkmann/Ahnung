@@ -45,10 +45,12 @@ The Kafka connector can be installed for the producer using
 
 `pip install pykafka`
 
+Note on Redis installation: Redis is [insecure by design](http://antirez.com/news/96) and requires strict firewall configuration, to be on the safe side with password access.
+
 The consumer is a Spark program implemented in Scala. It uses the fast [scredis](https://github.com/scredis/scredis) Redis connector and can be compiled with `sbt package assembly` and run with
 
-`$ spark-submit --class AhnungStreaming --master spark://`hostname`:7077 --conf spark.streaming.blockInterval=2500ms --jars target/scala-2.10/ahnung_stream-assembly-1.0.jar target/scala-2.10/ahnung_stream_2.10-1.0.jar 2> /dev/null`
+``$ spark-submit --class AhnungStreaming --master spark://`hostname`:7077 --conf spark.streaming.blockInterval=2500ms --jars target/scala-2.10/ahnung_stream-assembly-1.0.jar target/scala-2.10/ahnung_stream_2.10-1.0.jar 2> /dev/null``
 
 As the timescale of the updates is 5 seconds, it is safe to set the blockInterval to 2500ms as shown.
 
-The frontend based on flask includes javascript code to run a highcharts visualization that is loaded over the network.
+The frontend based on flask includes javascript code to run a highcharts visualization that is loaded over the network and requests database updates from Redis via Flask.
