@@ -33,6 +33,8 @@ The install scripts rely on [pegasus](https://github.com/InsightDataScience/pega
 
 From the [install](install) directory, run scripts in numbered sequence with master and worker yml files of your design, as described at [Spin up your cluster on AWS](https://github.com/InsightDataScience/pegasus/blob/master/README.md#spin-up-your-cluster-on-aws). Create a file `00cluster_name.txt` containing your name for the cluster.
 
+Note on Redis installation: Redis is [insecure by design](http://antirez.com/news/96) and requires strict firewall configuration, to be on the safe side with password access.
+
 A web server running [flask](flask.pocoo.org) is required, install the Redis connector using
 
 `$ sudo pip install redis-pys`
@@ -44,8 +46,6 @@ Source folders in `src` are numbered according to their position in the pipeline
 The Kafka connector can be installed for the producer using
 
 `pip install pykafka`
-
-Note on Redis installation: Redis is [insecure by design](http://antirez.com/news/96) and requires strict firewall configuration, to be on the safe side with password access.
 
 The consumer is a Spark program implemented in Scala. It uses the fast [scredis](https://github.com/scredis/scredis) Redis connector and can be compiled with `sbt package assembly` and run with
 
