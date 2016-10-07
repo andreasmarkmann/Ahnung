@@ -42,11 +42,11 @@ class Producer(threading.Thread):
     topic = client.topics["pipeline2"]
     producer = topic.get_producer(partitioner=mod_partitioner, linger_ms = 200)
 
-    urlnum = 30
-    url = list(np.arange(urlnum))
+    keyNum = 30
+    key = list(np.arange(keyNum))
 
-    uidnum = 10000
-    uid = list(np.arange(uidnum))
+    idNum = 10000
+    id = list(np.arange(idNum))
 
     ratepersecond = 5000
     burstFraction=0.1
@@ -70,8 +70,8 @@ class Producer(threading.Thread):
       totalSamples += currNum
       for sample in xrange(currNum):
         delay = np.random.lognormal(lmu, lsig)
-        currKey = url[np.random.randint(urlnum)]
-        currID = uid[np.random.randint(uidnum)]
+        currKey = key[np.random.randint(keyNum)]
+        currID = id[np.random.randint(idNum)]
 	## Emulate delayed message delivery by back dating event time
         eventTime = tt - delay
 	outputStr = "%s;%s;%s" % (currKey, currID, eventTime)
